@@ -1,4 +1,4 @@
-# My Grocery List
+# Usuals — Grocery List
 
 A mobile-friendly, printable progressive web app, seeded with **136 items in 16 categories** from your latest master grocery spreadsheet.
 
@@ -35,3 +35,7 @@ For the same list on all devices:
 - Imported category and item names are kept as shown in the workbook, including any spelling variants.
 - The printed sheet will fit across multiple pages if your printer needs more space; this is intentional to keep the text legible.
 - Cloud synchronization uses last-write-wins; avoid changing the list on two offline devices at the same time.
+
+## Branding update
+
+The new Usuals grocery tote/checkmark icon is used as the in-app header icon, browser favicon, iPhone/iPad home screen icon, and PWA install icon. If replacing a previously deployed copy, upload all files including `icons/` and `sw.js`; a device that previously installed the app may need to remove and re-add its home screen shortcut to refresh the icon. Existing grocery list data is not reset by these branding changes.
