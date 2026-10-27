@@ -39,3 +39,13 @@ For the same list on all devices:
 ## Branding update
 
 The new Usuals grocery tote/checkmark icon is used as the in-app header icon, browser favicon, iPhone/iPad home screen icon, and PWA install icon. If replacing a previously deployed copy, upload all files including `icons/` and `sw.js`; a device that previously installed the app may need to remove and re-add its home screen shortcut to refresh the icon. Existing grocery list data is not reset by these branding changes.
+
+## New: Shopping List screen
+
+1. On **Master List**, check the groceries you want to buy.
+2. Tap **View Shopping List** (or the **Shopping List** tab) to see only your selected items, grouped by category.
+3. On the shopping screen, check an item as it goes into your cart. That is a separate **picked up** state; it won't remove the item from the shopping list or alter the master selection.
+4. Use **Reset shopping progress** to start shopping the same selected list again, or **Master List → Uncheck all** to clear selections entirely.
+5. Use **Print shopping list** to print only the selected items.
+
+All state saves locally as before and participates in the optional Supabase sync when enabled. Replacing the files does **not** erase saved browser data.

@@ -3,3 +3,35 @@
 /* Usuals app identity */
 .brand-icon{object-fit:cover;display:block;border-radius:12px;background:transparent}
 @media(max-width:680px){.brand-icon{border-radius:10px}}
+
+/* Separate shopping screen: selections come from the master checklist. */
+[hidden]{display:none!important}
+.view-nav{display:flex;gap:8px;margin-bottom:22px;border-bottom:1px solid #dde5dc;padding-bottom:11px}
+.view-tab{border:0;background:transparent;color:#617567;font-weight:800;padding:12px 15px;border-radius:12px;font-size:14px}
+.view-tab.active{background:#e2ede1;color:#285840}
+.nav-count{display:inline-block;padding:2px 8px;border-radius:100px;background:#d2e4d3;font-size:11px}
+.list-next{display:flex;justify-content:flex-end;margin:17px 0}
+.list-next-bottom{margin-top:24px}.big-button{font-size:14px;padding:14px 20px}
+.shopping-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:15px 0 20px}
+.shopping-heading h2{font-size:clamp(30px,5vw,42px);margin:8px 0}.shopping-heading p{font-size:14px;color:#718174;line-height:1.5}
+.shop-actions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:23px}
+.shop-progress{height:10px;border-radius:100px;background:#e0e7de;overflow:hidden}
+#shoppingProgressBar{height:100%;width:0;background:#477d59;transition:width .2s}
+.shop-subtitle{font-size:13px;color:#64816b;margin:10px 0 23px}
+.shop-entry{cursor:pointer;min-height:48px}
+.shop-name{flex:1;font-size:14px;overflow-wrap:anywhere}
+.shop-entry.purchased .shop-name{text-decoration:line-through;color:#89968c}
+.shopping-empty{text-align:center;padding:45px 20px;border:1px dashed #bbd1bf;border-radius:16px;background:white}
+.shopping-empty p{color:#708373}
+@media(max-width:680px){.view-tab{flex:1;padding:12px 8px;font-size:13px}.list-next .big-button{width:100%}.shopping-heading .stat{min-width:98px}.shop-actions button{flex:1}}
+@media print{
+ .view-nav,.list-next,.shop-actions,.shop-progress,.shop-subtitle,.shopping-heading,.shopping-empty{display:none!important}
+ body:not(.print-shopping) #shoppingView{display:none!important}
+ body:not(.print-shopping) #masterView{display:block!important}
+ body.print-shopping #masterView{display:none!important}
+ body.print-shopping #shoppingView{display:block!important}
+ body.print-shopping #shoppingCategories{display:grid!important}
+ body.print-shopping:before{content:'USUALS · SHOPPING LIST'}
+ .shop-entry.purchased .shop-name{color:#555}
+ .shop-name{font-size:10px}
+}
