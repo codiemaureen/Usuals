@@ -49,3 +49,7 @@ The new Usuals grocery tote/checkmark icon is used as the in-app header icon, br
 5. Use **Print shopping list** to print only the selected items.
 
 All state saves locally as before and participates in the optional Supabase sync when enabled. Replacing the files does **not** erase saved browser data.
+
+
+## Windows icon update (v5)
+The app now has transparent PNG icons and an explicit `icons/Usuals-Windows.ico` for Windows desktop shortcuts. Upload/redeploy the full package. To change an existing Windows desktop shortcut immediately: right-click the shortcut > Properties > Web Document or Shortcut tab > Change Icon (if available) > Browse to the `.ico` file. If the shortcut is a Chrome/Edge-installed web app without Change Icon, remove the old desktop shortcut, uninstall the existing PWA from the browser, then reinstall it after redeployment. Windows may cache the old icon; restarting Windows Explorer or signing out and back in can refresh it. The iOS icon remains solid-backed since iOS uses its own shape mask.
