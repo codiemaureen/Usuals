@@ -1,18 +1,35 @@
-# Usuals — connect to Supabase
+# Usuals — email/password and email-code login
 
-The developer-managed Supabase URL and **publishable** key are already configured in `app.js`. Users need only sign in to Usuals; they do not need Supabase accounts.
+## Deploy
+1. Back up your current Netlify deploy and any local grocery data before replacing files.
+2. Keep your original `icons/` folder: it was not included in the original uploads. The PWA service worker expects these files.
+3. Deploy this folder's contents, with `index.html` at the website root, to the EXISTING Netlify site.
+4. In Supabase > Authentication > URL Configuration, set Site URL to `https://theusuals.netlify.app/` and allow `https://theusuals.netlify.app/**` and `http://localhost:8000/**`.
+5. In Supabase > Authentication > Providers > Email, enable email/password sign-in and leave **Confirm email** enabled for real users.
+6. In Supabase > Authentication > Email Templates: change **Magic Link**, **Confirm Signup**, and **Reset Password** templates to present `{{ .Token }}` as a verification code instead of solely `{{ .ConfirmationURL }}`. Sample bodies below. This step is REQUIRED for in-app email code entry.
+7. Existing email-link accounts can use Forgot password to choose a password.
 
-1. You have already run `usuals-supabase-setup.sql` successfully. Do **not** run the old `supabase-setup.sql`.
-2. In Supabase → Authentication → Providers → Email, confirm email sign-in is enabled and that Magic Link/OTP email delivery is configured.
-3. Under Authentication → URL Configuration, set **Site URL** to the final HTTPS address where Usuals will live, and add it to Redirect URLs. For local testing also allow `http://localhost:8000/**` (the path wildcard should be adjusted according to Supabase's allowed redirects).
-4. Publish this folder as a static site on Vercel or Netlify. **Important:** Copy your existing `icons/` directory into this folder before deploying; your uploaded files did not include it.
-5. Run locally from this folder with `python -m http.server 8000`; visit `http://localhost:8000`. Click **Sign in**, enter your email, and follow the link. Your first login creates a private household and fills it with the starter grocery list.
-6. Log in on your other device with the same email to test sync.
+### Example templates (paste each into the matching email template editor)
 
-## Current scope and limitations
+**Magic Link / OTP:**
+```html
+<h2>Your Usuals sign-in code</h2><p>Enter this code inside Usuals:</p><h1>{{ .Token }}</h1><p>If you did not request this, ignore this message.</p>
+```
 
-- This release synchronizes the same account across devices. The SQL already supports household membership, but **invitations and adding a second user to an existing household are not implemented yet**. Do not promise your husband a separate login until that is built.
-- The list is stored as one JSON document, so near-simultaneous edits can overwrite each other (last-write-wins). For robust multi-person simultaneous shopping, migrate to row-level items and conflict handling.
-- Signed-out edits stay local, but first sign-in uses the account's cloud data (or the default starter list for a new account); local changes made while signed out are not automatically imported.
-- The app has a local/offline cache. It only synchronizes changes made while an authenticated session has a working connection; it does not yet guarantee offline-to-online reconciliation.
-- Publishable keys and project URLs are safe to include in browser code; **never include a secret or service_role key**.
+**Confirm Signup:**
+```html
+<h2>Confirm your Usuals account</h2><p>Enter this code in Usuals:</p><h1>{{ .Token }}</h1>
+```
+
+**Reset Password:**
+```html
+<h2>Reset your Usuals password</h2><p>Enter this code in Usuals:</p><h1>{{ .Token }}</h1><p>If you did not request a reset, ignore this message.</p>
+```
+
+## Important limitations
+- Supabase's default email sender has strict rate limits; changing the login method does not increase them. Password login does not require an email on each visit. For production, configure custom SMTP.
+- Only same-account device synchronization exists in this version, not invitations for separate household accounts.
+- List saving still replaces an entire JSON document, so simultaneous edits can overwrite each other. Avoid editing two devices at once until item-level concurrency is implemented.
+- Existing local-only grocery lists are not automatically merged into a new cloud account. Back them up before first sign-in.
+- The publishable Supabase key in app.js is safe for frontend use; NEVER put a secret/service-role key there.
+- This has been statically checked, not tested against your live Supabase project.

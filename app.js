@@ -71,7 +71,7 @@ function updateSyncUI(){
   $('signedInPanel').hidden=!signedIn;
   $('signedInAs').textContent=signedIn?`Signed in as ${session.user.email}`:'';
   $('accountTitle').textContent=signedIn?'Your Usuals account':'Welcome to Usuals';
-  $('accountIntro').textContent=signedIn?'Your grocery list is saved to your household and synchronized across signed-in devices.':'Enter your email for a secure sign-in link. No separate Supabase account is needed.';
+  $('accountIntro').textContent=signedIn?'Your grocery list is saved to your household and synchronized across signed-in devices.':'Sign in with your Usuals account. Your groceries follow you across devices.';
   $('syncBtn').textContent=signedIn?'☁ Account':'☁ Sign in';
   if(!signedIn)$('status').textContent='Saved on this device · Sign in to sync';
 }
@@ -156,14 +156,93 @@ async function loadSupabase(){
 }
 $('syncBtn').onclick=()=>{$('syncDialog').showModal();updateSyncUI()};
 $('closeSync').onclick=()=>$('syncDialog').close();
-$('emailLogin').onclick=async()=>{
- if(!cloud){showSyncMessage('Still connecting. Please reload the page.');return}
- const email=$('syncEmail').value.trim();if(!email){showSyncMessage('Enter your email address.');return}
- $('emailLogin').disabled=true;
- try{
-  const {error}=await cloud.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:true}});
-  showSyncMessage(error?error.message:'Check your email for a sign-in link. Open it on this device.');
- }catch(err){showSyncMessage(err.message)}finally{$('emailLogin').disabled=false}
+// Passwords stay with Supabase Auth; they are never stored in Usuals or localStorage.
+let authMode='signin', pendingCodeEmail='', pendingCodeType='email';
+const authPanels=['passwordForm','codeRequestForm','codeVerifyForm','resetRequestForm','resetFinishForm'];
+function showAuthPanel(panel){
+ for(const name of authPanels)$(name).hidden=name!==panel;
+ $('backToPassword').hidden=panel==='passwordForm';
+ $('modeSignIn').classList.toggle('active',authMode==='signin'&&panel==='passwordForm');
+ $('modeSignUp').classList.toggle('active',authMode==='signup'&&panel==='passwordForm');
+ showSyncMessage('');
+}
+function setAuthMode(mode){
+ authMode=mode;
+ $('passwordSubmit').textContent=mode==='signup'?'Create account':'Sign in';
+ $('syncPassword').autocomplete=mode==='signup'?'new-password':'current-password';
+ $('resetMode').hidden=mode==='signup';
+ showAuthPanel('passwordForm');
+}
+function authError(error){
+ const message=error?.message||String(error);
+ if(/rate limit|rate exceeded|too many requests/i.test(message))return 'Email limit reached. Wait before requesting another code, or sign in with your password.';
+ return message;
+}
+async function withAuthButton(button,task){
+ if(!cloud){showSyncMessage('Unable to connect to Supabase. Check your internet connection.');return}
+ button.disabled=true;
+ try{await task()}catch(error){showSyncMessage(authError(error))}finally{button.disabled=false}
+}
+$('modeSignIn').onclick=()=>setAuthMode('signin');
+$('modeSignUp').onclick=()=>setAuthMode('signup');
+$('backToPassword').onclick=()=>setAuthMode('signin');
+$('codeMode').onclick=()=>{pendingCodeType='email';showAuthPanel('codeRequestForm')};
+$('resetMode').onclick=()=>showAuthPanel('resetRequestForm');
+$('passwordForm').onsubmit=async event=>{
+ event.preventDefault();
+ await withAuthButton($('passwordSubmit'),async()=>{
+  const email=$('syncEmail').value.trim(), password=$('syncPassword').value;
+  const result=authMode==='signup'
+   ?await cloud.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}})
+   :await cloud.auth.signInWithPassword({email,password});
+  if(result.error)throw result.error;
+  if(authMode==='signup'&&!result.data.session){
+   pendingCodeEmail=email; pendingCodeType='email';$('codeEmail').value=email;
+   $('codeHelp').textContent='Check your email for a confirmation code. Enter it here to finish creating your account.';
+   showAuthPanel('codeVerifyForm');
+   showSyncMessage('Account created. Check your email for the confirmation code.');
+  } else if(result.data.session){showSyncMessage('Signed in successfully.');}
+  else showSyncMessage('Check your email to confirm your account.');
+ });
+};
+$('codeRequestForm').onsubmit=async event=>{
+ event.preventDefault();
+ await withAuthButton($('sendCode'),async()=>{
+  pendingCodeEmail=$('codeEmail').value.trim(); pendingCodeType='email';
+  // shouldCreateUser:false ensures signing in never silently creates a new account.
+  const {error}=await cloud.auth.signInWithOtp({email:pendingCodeEmail,options:{shouldCreateUser:false}});
+  if(error)throw error;
+  $('codeHelp').textContent='Enter the one-time sign-in code emailed to you.';
+  showAuthPanel('codeVerifyForm');showSyncMessage('Code sent. Enter it here without leaving Usuals.');
+ });
+};
+$('codeVerifyForm').onsubmit=async event=>{
+ event.preventDefault();
+ await withAuthButton($('verifyCode'),async()=>{
+  const {error}=await cloud.auth.verifyOtp({email:pendingCodeEmail,token:$('emailCode').value.trim(),type:pendingCodeType});
+  if(error)throw error;
+  showSyncMessage('Verified. You are signed in.');$('emailCode').value='';
+ });
+};
+$('resetRequestForm').onsubmit=async event=>{
+ event.preventDefault();
+ await withAuthButton($('sendReset'),async()=>{
+  pendingCodeEmail=$('resetEmail').value.trim();
+  const {error}=await cloud.auth.resetPasswordForEmail(pendingCodeEmail,{redirectTo:location.origin+location.pathname});
+  if(error)throw error;
+  showAuthPanel('resetFinishForm');showSyncMessage('If that account exists, check your email for a reset code.');
+ });
+};
+$('resetFinishForm').onsubmit=async event=>{
+ event.preventDefault();
+ await withAuthButton($('finishReset'),async()=>{
+  const {error}=await cloud.auth.verifyOtp({email:pendingCodeEmail,token:$('resetCode').value.trim(),type:'recovery'});
+  if(error)throw error;
+  const updated=await cloud.auth.updateUser({password:$('newPassword').value});
+  if(updated.error)throw updated.error;
+  $('resetCode').value='';$('newPassword').value='';
+  showSyncMessage('Password updated. Your account is signed in.');
+ });
 };
 $('logout').onclick=async()=>{if(!cloud)return;const {error}=await cloud.auth.signOut();if(error)showSyncMessage(error.message);else await handleAuth(null)};
 render();updateSyncUI();loadSupabase();

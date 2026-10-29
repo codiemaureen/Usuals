@@ -35,3 +35,13 @@
  .shop-entry.purchased .shop-name{color:#555}
  .shop-name{font-size:10px}
 }
+
+/* Usuals authentication */
+.auth-tabs{display:flex;gap:6px;background:#eef2eb;border-radius:12px;padding:4px;margin:16px 0}
+.auth-tab{flex:1;border:0;border-radius:9px;padding:10px;background:transparent;color:#667a69;font-weight:750}
+.auth-tab.active{background:#fff;color:#315f4b;box-shadow:0 1px 5px #26382d19}
+.auth-main{width:100%;margin-top:12px}
+.auth-extras{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.auth-extras .textbtn{font-size:12px;text-align:left}
+#syncMessage{min-height:20px;overflow-wrap:anywhere}
+#codeHelp{margin-top:14px}
